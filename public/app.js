@@ -88,6 +88,9 @@
     wallPane: document.getElementById("wall-pane"),
     wallToggle: document.getElementById("wall-toggle"),
     reset: document.getElementById("reset-btn"),
+    gate: document.getElementById("gate"),
+    gateForm: document.getElementById("gate-form"),
+    gateErr: document.getElementById("gate-err"),
   };
 
   let state = emptyState();
@@ -95,6 +98,22 @@
   let compareOn = false;
   let viewingPinId = null;
   let inFlight = false;
+  let needsGate = false;
+
+  function gateCode() {
+    try {
+      return sessionStorage.getItem("studio.gate") || "";
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function runHeaders() {
+    const headers = { "Content-Type": "application/json" };
+    const code = gateCode();
+    if (code) headers["X-Studio-Gate"] = code;
+    return headers;
+  }
 
   function emptyState() {
     return {
@@ -212,7 +231,7 @@
         return "You never put a hard constraint, so it wandered.";
       }
     }
-    if (/invent/i.test(ticks)) {
+    if (/forbids inventing/i.test(ticks)) {
       const sacred = project.mustNotInvent || "";
       if (sacred && !prompt.includes(sacred)) {
         return "You never forbade inventing " + sacred + ", so it was free to make it up.";
@@ -221,9 +240,15 @@
     return "";
   }
 
-  function cardNode(item, label) {
+  function cardNode(item, label, slug) {
     const wrap = document.createElement("article");
-    wrap.className = "card";
+    wrap.className = "sheet";
+    if (slug) {
+      const sl = document.createElement("div");
+      sl.className = "slug";
+      sl.textContent = slug;
+      wrap.appendChild(sl);
+    }
     if (label) {
       const lab = document.createElement("div");
       lab.className = "label";
@@ -247,6 +272,7 @@
   function renderArtefact(run, label) {
     const kind = JOBS[run.jobId].kind;
     const parsed = run.json;
+    const slug = jobLabel(run.jobId) + " · v" + run.version;
     if (kind === "list") {
       const list = document.createElement("div");
       list.className = "list";
@@ -257,11 +283,11 @@
         list.appendChild(lab);
       }
       const items = parsed && Array.isArray(parsed.items) ? parsed.items : fallbackList(run.output);
-      items.forEach((item) => list.appendChild(cardNode(item)));
+      items.forEach((item, i) => list.appendChild(cardNode(item, "", i === 0 ? slug : "")));
       return list;
     }
     const item = parsed && parsed.title != null ? parsed : { title: "", body: run.output || "", meta: "" };
-    return cardNode(item, label);
+    return cardNode(item, label, slug);
   }
 
   function fallbackList(text) {
@@ -274,6 +300,13 @@
   }
 
   function render() {
+    if (needsGate && !gateCode()) {
+      if (el.gate) el.gate.hidden = false;
+      el.intake.hidden = true;
+      el.studio.hidden = true;
+      return;
+    }
+    if (el.gate) el.gate.hidden = true;
     if (!state.project) {
       el.intake.hidden = false;
       el.studio.hidden = true;
@@ -503,7 +536,7 @@
     try {
       const resp = await fetch("/run", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: runHeaders(),
         body: JSON.stringify({
           jobId: state.currentJobId,
           prompt: prompt,
@@ -511,6 +544,15 @@
         }),
       });
       const data = await resp.json();
+      if (resp.status === 401 || (data && data.error === "gate")) {
+        needsGate = true;
+        try {
+          sessionStorage.removeItem("studio.gate");
+        } catch (err) {}
+        setStatus("This studio is gated.");
+        render();
+        return;
+      }
       if (!data || data.ok !== true) {
         const err = (data && data.error) || "upstream";
         const messages = {
@@ -592,9 +634,34 @@
     el.wallPane.classList.toggle("open");
   });
 
+  if (el.gateForm) {
+    el.gateForm.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const code = document.getElementById("f-gate").value.trim();
+      if (!code) return;
+      try {
+        sessionStorage.setItem("studio.gate", code);
+      } catch (err) {}
+      if (el.gateErr) el.gateErr.hidden = true;
+      render();
+    });
+  }
+
   state = load();
+  while (state.currentJobId !== "job1" && !isUnlocked(state.currentJobId)) {
+    state.currentJobId = "job" + (jobN(state.currentJobId) - 1);
+  }
   if (state.project && state.currentJobId === "job1" && !state.drafts.job1 && !state.runs.length) {
     state.drafts.job1 = VIBE;
   }
-  render();
+
+  fetch("/health")
+    .then((r) => r.json())
+    .then((data) => {
+      needsGate = Boolean(data && data.gate);
+      render();
+    })
+    .catch(() => {
+      render();
+    });
 })();

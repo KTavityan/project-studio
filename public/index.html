@@ -3,19 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'">
   <title>Project Studio</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to the work</a>
+  <main id="main">
 
   <section id="intake" class="intake">
     <header class="mast">
-      <p class="kicker">Project Studio</p>
+      <p class="ghost-num" aria-hidden="true">01</p>
+      <p class="mark">Project studio</p>
       <h1>What should exist.</h1>
       <p class="lede">Name the thing. Every job after this is a piece of it. No lessons, no chat.</p>
     </header>
     <form id="intake-form" class="intake-form">
+      <p class="ticket">Job ticket</p>
       <label>
         Project name
         <input id="f-name" name="name" required maxlength="80" autocomplete="off">
@@ -39,22 +44,22 @@
   <section id="studio" class="studio" hidden>
     <header class="studio-bar">
       <div class="studio-id">
-        <p class="kicker">Project Studio</p>
+        <p class="mark">Project studio</p>
         <h1 id="project-title"></h1>
       </div>
       <nav class="jobs" aria-label="Jobs">
-        <button type="button" class="job-btn" data-job="job1">Job 1</button>
-        <button type="button" class="job-btn" data-job="job2">Job 2</button>
-        <button type="button" class="job-btn" data-job="job3">Job 3</button>
-        <button type="button" class="job-btn" data-job="job4">Job 4</button>
+        <button type="button" class="job-btn" data-job="job1">01</button>
+        <button type="button" class="job-btn" data-job="job2">02</button>
+        <button type="button" class="job-btn" data-job="job3">03</button>
+        <button type="button" class="job-btn" data-job="job4">04</button>
       </nav>
       <div class="bar-actions">
         <button type="button" id="wall-toggle" class="btn ghost wall-toggle">Wall (0)</button>
-        <button type="button" id="reset-btn" class="btn danger">Reset</button>
+        <button type="button" id="reset-btn" class="text-btn">Reset</button>
       </div>
     </header>
 
-    <div id="main" class="panes">
+    <div class="panes">
       <aside class="pane left" aria-label="The job">
         <p class="job-index" id="job-index"></p>
         <h2 id="job-title"></h2>
@@ -66,18 +71,19 @@
           <textarea id="prompt" spellcheck="true"></textarea>
         </label>
         <div id="versions" class="versions" aria-label="Prompt versions"></div>
-        <button type="button" id="run-btn" class="btn primary">Run</button>
+        <button type="button" id="run-btn" class="btn primary">Pull a proof</button>
       </aside>
 
-      <section class="pane centre" aria-label="The artefact">
+      <section class="pane centre press-bed" aria-label="The artefact">
+        <div class="reg" aria-hidden="true"></div>
         <div class="centre-toolbar">
-          <button type="button" id="compare-btn" class="btn ghost" disabled>Last vs this</button>
+          <button type="button" id="compare-btn" class="text-btn" disabled>Last vs this</button>
         </div>
         <div id="status" class="status" hidden></div>
-        <div id="miss" class="miss" hidden></div>
         <div id="artefacts" class="artefacts"></div>
+        <div id="miss" class="miss" hidden></div>
         <div id="pin-prompt" class="pin-prompt" hidden>
-          <p class="kicker">Shipped prompt</p>
+          <p class="mark">Shipped prompt</p>
           <pre id="pin-prompt-text"></pre>
         </div>
         <div id="job3-badge" class="badge-row" hidden>
@@ -88,19 +94,34 @@
         </div>
         <div class="ship-row">
           <button type="button" id="ship-btn" class="btn primary" disabled>Ship</button>
-          <button type="button" id="scrap-btn" class="btn ghost" disabled>Scrap</button>
+          <button type="button" id="scrap-btn" class="text-btn" disabled>Scrap</button>
           <input id="scrap-reason" type="text" maxlength="200" placeholder="Why scrap it" disabled>
         </div>
       </section>
 
       <aside class="pane right" id="wall-pane" aria-label="The wall">
-        <h2>Wall</h2>
+        <h2>The wall</h2>
         <p id="wall-empty" class="empty">Nothing shipped yet. The wall is the project.</p>
         <ol id="wall-list" class="wall-list"></ol>
       </aside>
     </div>
   </section>
 
-  <script src="/static/app.js" defer></script>
+  <section id="gate" class="gate" hidden>
+    <p class="mark">Project studio</p>
+    <h1>Door is shut.</h1>
+    <p class="lede">This press is gated. Enter the code, then name the thing.</p>
+    <form id="gate-form" class="intake-form">
+      <label>
+        Gate code
+        <input id="f-gate" name="gate" required maxlength="80" autocomplete="off">
+      </label>
+      <button type="submit" class="btn primary">Unlock</button>
+      <p id="gate-err" class="miss" hidden></p>
+    </form>
+  </section>
+
+  </main>
+  <script src="/app.js" defer></script>
 </body>
 </html>

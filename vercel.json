@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/run", "destination": "/api/run" },
+    { "source": "/health", "destination": "/api/health" }
+  ],
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 30,
+      "excludeFiles": "{tests/**,.venv/**,**/*.md}"
+    }
+  }
+}

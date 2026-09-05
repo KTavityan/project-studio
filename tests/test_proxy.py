@@ -4,24 +4,36 @@ import httpx
 from fastapi.testclient import TestClient
 
 os.environ["STUDIO_MOCK"] = "1"
+os.environ["STUDIO_GATE"] = ""
 os.environ.pop("STUDIO_API_KEY", None)
 
+from backend import engine  # noqa: E402
 from backend import main  # noqa: E402
 from backend.spend import SpendCap  # noqa: E402
 
 
 client = TestClient(main.app)
+PROJECT = {
+    "name": "Northside Records",
+    "exists": "a listening bar",
+    "audience": "vinyl buyers",
+    "mustNotInvent": "opening hours",
+}
 
 
 def setup_function() -> None:
     os.environ["STUDIO_MOCK"] = "1"
+    os.environ["STUDIO_GATE"] = ""
     main.reset_cap_for_tests()
+    engine.reset_cap_for_tests()
 
 
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"ok": True}
+    body = r.json()
+    assert body["ok"] is True
+    assert "gate" in body
 
 
 def test_index_serves_html():
@@ -107,19 +119,19 @@ def test_system_prefix_has_no_project_fields():
 def test_timeout_envelope(monkeypatch):
     os.environ["STUDIO_MOCK"] = "0"
     os.environ["STUDIO_API_KEY"] = "test-key"
-    main.reset_cap_for_tests()
+    engine.reset_cap_for_tests()
 
     class Boom:
-        async def __aenter__(self):
+        def __enter__(self):
             return self
 
-        async def __aexit__(self, *args):
+        def __exit__(self, *args):
             return False
 
-        async def post(self, *args, **kwargs):
+        def post(self, *args, **kwargs):
             raise httpx.TimeoutException("slow")
 
-    monkeypatch.setattr(main.httpx, "AsyncClient", lambda timeout: Boom())
+    monkeypatch.setattr(engine.httpx, "Client", lambda timeout: Boom())
     r = client.post(
         "/run",
         json={
@@ -145,3 +157,46 @@ def test_job2_mock_is_a_list():
     data = r.json()
     assert data["ok"] is True
     assert len(data["json"]["items"]) == 10
+
+
+def test_prompt_too_long():
+    r = client.post(
+        "/run",
+        json={"jobId": "job1", "prompt": "x" * 12001, "project": PROJECT},
+    )
+    assert r.json()["error"] == "bad_request"
+
+
+def test_job3_mock_has_no_badge():
+    r = client.post(
+        "/run",
+        json={"jobId": "job3", "prompt": "catch a lie", "project": PROJECT},
+    )
+    data = r.json()
+    assert data["ok"] is True
+    assert "badge" not in data["json"]
+
+
+def test_gate_blocks_run():
+    os.environ["STUDIO_GATE"] = "session-code"
+    r = client.post(
+        "/run",
+        json={"jobId": "job1", "prompt": "hello", "project": PROJECT},
+    )
+    assert r.status_code == 401
+    assert r.json()["error"] == "gate"
+    r2 = client.post(
+        "/run",
+        headers={"x-studio-gate": "session-code"},
+        json={"jobId": "job1", "prompt": "hello", "project": PROJECT},
+    )
+    assert r2.status_code == 200
+    assert r2.json()["ok"] is True
+    os.environ["STUDIO_GATE"] = ""
+
+
+def test_health_reports_gate():
+    os.environ["STUDIO_GATE"] = "session-code"
+    assert client.get("/health").json()["gate"] is True
+    os.environ["STUDIO_GATE"] = ""
+    assert client.get("/health").json()["gate"] is False

@@ -28,7 +28,9 @@ Put a key in `.env` as `STUDIO_API_KEY`, or set `STUDIO_MOCK=1` to skip the mode
 
 That binds `127.0.0.1:8787` only. Do not pass `--host 0.0.0.0`.
 
-Open `http://127.0.0.1:8787`. The server binds localhost only.
+Open `http://127.0.0.1:8787`. The local server binds localhost only.
+
+On Vercel the same UI is served from `public/` and `POST /run` goes to `api/run.py`. Set `STUDIO_API_KEY` (and optionally `STUDIO_GATE`) in the project env. The process spend cap is weaker on serverless because instances recycle; keep the OpenAI project budget tight as well.
 
 ## Tests
 
