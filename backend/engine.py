@@ -44,6 +44,33 @@ def _mock_on() -> bool:
     return os.environ.get("STUDIO_MOCK", "0").strip() == "1"
 
 
+def _api_key() -> str:
+    return (
+        os.environ.get("STUDIO_API_KEY", "").strip()
+        or os.environ.get("AI_GATEWAY_API_KEY", "").strip()
+        or os.environ.get("VERCEL_OIDC_TOKEN", "").strip()
+    )
+
+
+def _base_url() -> str:
+    explicit = os.environ.get("STUDIO_BASE_URL", "").strip()
+    if explicit:
+        return explicit.rstrip("/")
+    if not os.environ.get("STUDIO_API_KEY", "").strip() and (
+        os.environ.get("AI_GATEWAY_API_KEY", "").strip()
+        or os.environ.get("VERCEL_OIDC_TOKEN", "").strip()
+    ):
+        return "https://ai-gateway.vercel.sh/v1"
+    return "https://api.openai.com/v1"
+
+
+def _model(base: str) -> str:
+    model = os.environ.get("STUDIO_MODEL", "").strip() or "gpt-4o-mini"
+    if base.startswith("https://ai-gateway.vercel.sh") and "/" not in model:
+        return "openai/" + model
+    return model
+
+
 def system_prefix(job_id: str) -> str:
     kind = JOB_KIND[job_id]
     return f"Return a {kind} as JSON only. No preamble."
@@ -161,9 +188,9 @@ def execute_run(job_id: str, prompt: str, project: dict[str, Any]) -> dict[str, 
         print("studio run cost_usd=0.000000 spent_usd=%.6f mock=1" % _cap.spent_usd, flush=True)
         return mock_payload(job_id, project)
 
-    api_key = os.environ.get("STUDIO_API_KEY", "").strip()
-    base = os.environ.get("STUDIO_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-    model = os.environ.get("STUDIO_MODEL", "gpt-4o-mini")
+    api_key = _api_key()
+    base = _base_url()
+    model = _model(base)
     if not api_key:
         return {
             "ok": False,

@@ -159,6 +159,16 @@ def test_job2_mock_is_a_list():
     assert len(data["json"]["items"]) == 10
 
 
+def test_gateway_oidc_base_when_no_studio_key(monkeypatch):
+    monkeypatch.delenv("STUDIO_API_KEY", raising=False)
+    monkeypatch.delenv("STUDIO_BASE_URL", raising=False)
+    monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
+    monkeypatch.setenv("VERCEL_OIDC_TOKEN", "oidc-token")
+    assert engine._base_url() == "https://ai-gateway.vercel.sh/v1"
+    assert engine._api_key() == "oidc-token"
+    assert engine._model(engine._base_url()) == "openai/gpt-4o-mini"
+
+
 def test_prompt_too_long():
     r = client.post(
         "/run",
