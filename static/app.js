@@ -189,23 +189,35 @@
     return state.runs.find((r) => r.id === id) || null;
   }
 
+  const BADGES = ["grounded", "invented", "unknown"];
+
   function missLine(prompt, project, jobId) {
+    const job = JOBS[jobId];
+    if (!job) return "";
+    const ticks = job.ticks.join(" ");
     const p = prompt.toLowerCase();
-    const audience = (project.audience || "").toLowerCase();
-    if (audience && !p.includes(audience)) {
-      return "You never named who this is for, so it wrote generic copy.";
+    if (/who it is for/i.test(ticks)) {
+      const audience = (project.audience || "").toLowerCase();
+      if (audience && !p.includes(audience)) {
+        return "You never named who this is for, so it wrote generic copy.";
+      }
     }
-    if (!/\d/.test(prompt) && !/\breturn\b/i.test(prompt) && !/\bformat\b/i.test(prompt) && !/\bjson\b/i.test(prompt)) {
-      return "You never said the format, so it guessed the shape.";
+    if (/format/i.test(ticks)) {
+      if (!/\d/.test(prompt) && !/\breturn\b/i.test(prompt) && !/\bformat\b/i.test(prompt) && !/\bjson\b/i.test(prompt)) {
+        return "You never said the format, so it guessed the shape.";
+      }
     }
-    if (!/\bmust\b/i.test(prompt) && !/\bdo not\b/i.test(prompt) && !/\bnever\b/i.test(prompt) && !/\bonly\b/i.test(prompt)) {
-      return "You never put a hard constraint, so it wandered.";
+    if (/hard constraint/i.test(ticks)) {
+      if (!/\bmust\b/i.test(prompt) && !/\bdo not\b/i.test(prompt) && !/\bnever\b/i.test(prompt) && !/\bonly\b/i.test(prompt)) {
+        return "You never put a hard constraint, so it wandered.";
+      }
     }
-    const sacred = project.mustNotInvent || "";
-    if (sacred && !prompt.includes(sacred)) {
-      return "You never forbade inventing " + sacred + ", so it was free to make it up.";
+    if (/invent/i.test(ticks)) {
+      const sacred = project.mustNotInvent || "";
+      if (sacred && !prompt.includes(sacred)) {
+        return "You never forbade inventing " + sacred + ", so it was free to make it up.";
+      }
     }
-    if (jobId) return "";
     return "";
   }
 
@@ -357,6 +369,13 @@
     el.scrap.disabled = !centreRun;
     el.scrapReason.disabled = !centreRun;
 
+    if (!inFlight && !viewingPinId) {
+      const latest = latestRun(state.currentJobId);
+      setMiss(latest ? missLine(latest.prompt, state.project, latest.jobId) : "");
+    } else if (viewingPinId) {
+      setMiss("");
+    }
+
     const pins = shipped();
     el.wallToggle.textContent = "Wall (" + pins.length + ")";
     show(el.wallEmpty, pins.length === 0);
@@ -385,7 +404,7 @@
 
   function canShipCentre(run) {
     if (!run || run.jobId !== state.currentJobId) return false;
-    if (state.currentJobId === "job3" && !run.badge) return false;
+    if (state.currentJobId === "job3" && BADGES.indexOf(run.badge) === -1) return false;
     return true;
   }
 
@@ -445,6 +464,7 @@
       state.currentJobId = id;
       viewingPinId = null;
       compareOn = false;
+      setStatus("");
       save();
       render();
     });
@@ -510,7 +530,7 @@
         prompt: prompt,
         output: data.text || "",
         json: data.json || null,
-        badge: data.json && data.json.badge ? data.json.badge : null,
+        badge: data.json && BADGES.indexOf(data.json.badge) !== -1 ? data.json.badge : null,
         createdAt: new Date().toISOString(),
         shipped: false,
         shippedAt: null,

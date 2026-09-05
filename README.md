@@ -23,8 +23,10 @@ cp .env.example .env
 Put a key in `.env` as `STUDIO_API_KEY`, or set `STUDIO_MOCK=1` to skip the model and return canned artefacts.
 
 ```
-.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8787
+.venv/bin/python -m backend
 ```
+
+That binds `127.0.0.1:8787` only. Do not pass `--host 0.0.0.0`.
 
 Open `http://127.0.0.1:8787`. The server binds localhost only.
 

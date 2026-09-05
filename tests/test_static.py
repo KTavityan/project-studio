@@ -21,3 +21,4 @@ def test_job_ids_and_storage_key_present():
     assert "make something cool for this" in js
     assert "Constraint from scrap:" in js
     assert "innerHTML" not in js
+    assert "grounded" in js and "invented" in js and "unknown" in js
