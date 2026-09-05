@@ -233,7 +233,7 @@
     }
     if (/forbids inventing/i.test(ticks)) {
       const sacred = project.mustNotInvent || "";
-      if (sacred && !prompt.includes(sacred)) {
+      if (sacred && !p.includes(sacred.toLowerCase())) {
         return "You never forbade inventing " + sacred + ", so it was free to make it up.";
       }
     }
@@ -356,6 +356,7 @@
         state.drafts[state.currentJobId] = run.prompt;
         save();
         el.prompt.value = run.prompt;
+        el.run.disabled = inFlight || !el.prompt.value.trim();
       });
       el.versions.appendChild(b);
     });
@@ -635,12 +636,30 @@
   });
 
   if (el.gateForm) {
-    el.gateForm.addEventListener("submit", (ev) => {
+    el.gateForm.addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const code = document.getElementById("f-gate").value.trim();
       if (!code) return;
       try {
         sessionStorage.setItem("studio.gate", code);
+      } catch (err) {}
+      try {
+        const resp = await fetch("/run", {
+          method: "POST",
+          headers: runHeaders(),
+          body: JSON.stringify({ jobId: "job1", prompt: "", project: {} }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.status === 401 || (data && data.error === "gate")) {
+          try {
+            sessionStorage.removeItem("studio.gate");
+          } catch (err) {}
+          if (el.gateErr) {
+            el.gateErr.hidden = false;
+            el.gateErr.textContent = "That code does not open this press.";
+          }
+          return;
+        }
       } catch (err) {}
       if (el.gateErr) el.gateErr.hidden = true;
       render();
