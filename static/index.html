@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Studio</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the work</a>
+
+  <section id="intake" class="intake">
+    <header class="mast">
+      <p class="kicker">Project Studio</p>
+      <h1>What should exist.</h1>
+      <p class="lede">Name the thing. Every job after this is a piece of it. No lessons, no chat.</p>
+    </header>
+    <form id="intake-form" class="intake-form">
+      <label>
+        Project name
+        <input id="f-name" name="name" required maxlength="80" autocomplete="off">
+      </label>
+      <label>
+        What should exist
+        <textarea id="f-exists" name="exists" required maxlength="400" rows="3"></textarea>
+      </label>
+      <label>
+        Who it is for
+        <input id="f-audience" name="audience" required maxlength="120" autocomplete="off">
+      </label>
+      <label>
+        One fact the model must never invent
+        <input id="f-must" name="mustNotInvent" required maxlength="160" autocomplete="off">
+      </label>
+      <button type="submit" class="btn primary">Open the studio</button>
+    </form>
+  </section>
+
+  <section id="studio" class="studio" hidden>
+    <header class="studio-bar">
+      <div class="studio-id">
+        <p class="kicker">Project Studio</p>
+        <h1 id="project-title"></h1>
+      </div>
+      <nav class="jobs" aria-label="Jobs">
+        <button type="button" class="job-btn" data-job="job1">Job 1</button>
+        <button type="button" class="job-btn" data-job="job2">Job 2</button>
+        <button type="button" class="job-btn" data-job="job3">Job 3</button>
+        <button type="button" class="job-btn" data-job="job4">Job 4</button>
+      </nav>
+      <div class="bar-actions">
+        <button type="button" id="wall-toggle" class="btn ghost wall-toggle">Wall (0)</button>
+        <button type="button" id="reset-btn" class="btn danger">Reset</button>
+      </div>
+    </header>
+
+    <div id="main" class="panes">
+      <aside class="pane left" aria-label="The job">
+        <p class="job-index" id="job-index"></p>
+        <h2 id="job-title"></h2>
+        <p id="job-moment" class="moment"></p>
+        <p id="lying-note" class="lying" hidden></p>
+        <ul id="job-ticks" class="ticks"></ul>
+        <label class="prompt-label">
+          Prompt
+          <textarea id="prompt" spellcheck="true"></textarea>
+        </label>
+        <div id="versions" class="versions" aria-label="Prompt versions"></div>
+        <button type="button" id="run-btn" class="btn primary">Run</button>
+      </aside>
+
+      <section class="pane centre" aria-label="The artefact">
+        <div class="centre-toolbar">
+          <button type="button" id="compare-btn" class="btn ghost" disabled>Last vs this</button>
+        </div>
+        <div id="status" class="status" hidden></div>
+        <div id="miss" class="miss" hidden></div>
+        <div id="artefacts" class="artefacts"></div>
+        <div id="pin-prompt" class="pin-prompt" hidden>
+          <p class="kicker">Shipped prompt</p>
+          <pre id="pin-prompt-text"></pre>
+        </div>
+        <div id="job3-badge" class="badge-row" hidden>
+          <span>Badge this output</span>
+          <button type="button" class="badge-btn" data-badge="grounded">grounded</button>
+          <button type="button" class="badge-btn" data-badge="invented">invented</button>
+          <button type="button" class="badge-btn" data-badge="unknown">unknown</button>
+        </div>
+        <div class="ship-row">
+          <button type="button" id="ship-btn" class="btn primary" disabled>Ship</button>
+          <button type="button" id="scrap-btn" class="btn ghost" disabled>Scrap</button>
+          <input id="scrap-reason" type="text" maxlength="200" placeholder="Why scrap it" disabled>
+        </div>
+      </section>
+
+      <aside class="pane right" id="wall-pane" aria-label="The wall">
+        <h2>Wall</h2>
+        <p id="wall-empty" class="empty">Nothing shipped yet. The wall is the project.</p>
+        <ol id="wall-list" class="wall-list"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
