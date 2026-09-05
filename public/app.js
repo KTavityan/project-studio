@@ -36,7 +36,7 @@
       title: "Catch a lie in {name}",
       moment:
         "A draft for {name} invents {mustNotInvent}. Write a prompt that refuses when the fact is unknown.",
-      lying: "A draft for {name} states, as fact, that {mustNotInvent}.",
+      lying: "A draft for {name} claims, as fact: {mustNotInvent} is 47, restock Friday.",
       ticks: [
         "Says what source is allowed (only the prompt, or a pasted note)",
         "Says to refuse or mark unknown rather than guess",
@@ -427,7 +427,7 @@
       btn.appendChild(strong);
       btn.appendChild(span);
       btn.addEventListener("click", () => {
-        viewingPinId = run.id;
+        viewingPinId = viewingPinId === run.id ? null : run.id;
         compareOn = false;
         render();
       });
@@ -529,6 +529,8 @@
   el.run.addEventListener("click", async () => {
     const prompt = el.prompt.value.trim();
     if (!prompt || inFlight) return;
+    const jobId = state.currentJobId;
+    const projectAtRun = state.project;
     inFlight = true;
     viewingPinId = null;
     setStatus("Running…");
@@ -539,9 +541,9 @@
         method: "POST",
         headers: runHeaders(),
         body: JSON.stringify({
-          jobId: state.currentJobId,
+          jobId: jobId,
           prompt: prompt,
-          project: state.project,
+          project: projectAtRun,
         }),
       });
       const data = await resp.json();
@@ -565,10 +567,11 @@
         setStatus(messages[err] || (data && data.message) || messages.upstream);
         return;
       }
-      const version = nextVersion(state.currentJobId);
+      if (state.project !== projectAtRun) return;
+      const version = nextVersion(jobId);
       const run = {
-        id: state.currentJobId + "-v" + version + "-" + Date.now(),
-        jobId: state.currentJobId,
+        id: jobId + "-v" + version + "-" + Date.now(),
+        jobId: jobId,
         version: version,
         prompt: prompt,
         output: data.text || "",
@@ -582,7 +585,7 @@
       state.runs.push(run);
       save();
       setStatus("");
-      setMiss(missLine(prompt, state.project, state.currentJobId));
+      setMiss(missLine(prompt, projectAtRun, jobId));
       viewingRunId = run.id;
     } catch (err) {
       setStatus("The model did not respond. Try Run again.");
@@ -667,9 +670,11 @@
   }
 
   state = load();
+  const loadedId = state.currentJobId;
   while (state.currentJobId !== "job1" && !isUnlocked(state.currentJobId)) {
     state.currentJobId = "job" + (jobN(state.currentJobId) - 1);
   }
+  if (loadedId !== state.currentJobId) save();
   if (state.project && state.currentJobId === "job1" && !state.drafts.job1 && !state.runs.length) {
     state.drafts.job1 = VIBE;
   }

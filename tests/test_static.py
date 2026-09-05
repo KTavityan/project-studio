@@ -23,6 +23,10 @@ def test_job_ids_and_storage_key_present():
     assert "innerHTML" not in js
     assert "grounded" in js and "invented" in js and "unknown" in js
     assert 'className = "sheet"' in js
+    assert "/forbids inventing/i" in js
+    assert "const jobId = state.currentJobId" in js
+    assert "viewingPinId === run.id" in js
+    assert "is 47, restock Friday" in js
 
 
 def test_woff2_fonts_are_present():
@@ -57,3 +61,4 @@ def test_skip_target_is_always_in_dom():
     assert 'href="#main"' in html
     assert '<main id="main">' in html
     assert html.find('<main id="main">') < html.find('id="intake"')
+    assert html.find('id="artefacts"') < html.find('id="miss"')
