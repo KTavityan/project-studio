@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -27,21 +26,9 @@ def fail(code: str, message: str) -> JSONResponse:
     return JSONResponse({"ok": False, "error": code, "message": message})
 
 
-def gate_required() -> bool:
-    return bool(os.environ.get("STUDIO_GATE", "").strip())
-
-
-def gate_ok(request: Request) -> bool:
-    expected = os.environ.get("STUDIO_GATE", "").strip()
-    if not expected:
-        return True
-    got = request.headers.get("x-studio-gate", "")
-    return got == expected
-
-
 @app.get("/health")
 def health() -> dict[str, bool]:
-    return {"ok": True, "gate": gate_required()}
+    return {"ok": True}
 
 
 @app.get("/")
@@ -61,11 +48,6 @@ def script() -> FileResponse:
 
 @app.post("/run")
 async def run(request: Request) -> JSONResponse:
-    if not gate_ok(request):
-        return JSONResponse(
-            {"ok": False, "error": "gate", "message": "This studio is gated."},
-            status_code=401,
-        )
     try:
         data = await request.json()
     except Exception:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from http.server import BaseHTTPRequestHandler
 
 
@@ -12,10 +11,7 @@ class handler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self) -> None:
-        payload = {
-            "ok": True,
-            "gate": bool(os.environ.get("STUDIO_GATE", "").strip()),
-        }
+        payload = {"ok": True}
         raw = json.dumps(payload).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

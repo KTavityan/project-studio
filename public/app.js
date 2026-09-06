@@ -88,9 +88,6 @@
     wallPane: document.getElementById("wall-pane"),
     wallToggle: document.getElementById("wall-toggle"),
     reset: document.getElementById("reset-btn"),
-    gate: document.getElementById("gate"),
-    gateForm: document.getElementById("gate-form"),
-    gateErr: document.getElementById("gate-err"),
   };
 
   let state = emptyState();
@@ -98,22 +95,6 @@
   let compareOn = false;
   let viewingPinId = null;
   let inFlight = false;
-  let needsGate = false;
-
-  function gateCode() {
-    try {
-      return sessionStorage.getItem("studio.gate") || "";
-    } catch (err) {
-      return "";
-    }
-  }
-
-  function runHeaders() {
-    const headers = { "Content-Type": "application/json" };
-    const code = gateCode();
-    if (code) headers["X-Studio-Gate"] = code;
-    return headers;
-  }
 
   function emptyState() {
     return {
@@ -300,13 +281,6 @@
   }
 
   function render() {
-    if (needsGate && !gateCode()) {
-      if (el.gate) el.gate.hidden = false;
-      el.intake.hidden = true;
-      el.studio.hidden = true;
-      return;
-    }
-    if (el.gate) el.gate.hidden = true;
     if (!state.project) {
       el.intake.hidden = false;
       el.studio.hidden = true;
@@ -539,7 +513,7 @@
     try {
       const resp = await fetch("/run", {
         method: "POST",
-        headers: runHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId: jobId,
           prompt: prompt,
@@ -547,15 +521,6 @@
         }),
       });
       const data = await resp.json();
-      if (resp.status === 401 || (data && data.error === "gate")) {
-        needsGate = true;
-        try {
-          sessionStorage.removeItem("studio.gate");
-        } catch (err) {}
-        setStatus("This studio is gated.");
-        render();
-        return;
-      }
       if (!data || data.ok !== true) {
         const err = (data && data.error) || "upstream";
         const messages = {
@@ -638,37 +603,6 @@
     el.wallPane.classList.toggle("open");
   });
 
-  if (el.gateForm) {
-    el.gateForm.addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const code = document.getElementById("f-gate").value.trim();
-      if (!code) return;
-      try {
-        sessionStorage.setItem("studio.gate", code);
-      } catch (err) {}
-      try {
-        const resp = await fetch("/run", {
-          method: "POST",
-          headers: runHeaders(),
-          body: JSON.stringify({ jobId: "job1", prompt: "", project: {} }),
-        });
-        const data = await resp.json().catch(() => ({}));
-        if (resp.status === 401 || (data && data.error === "gate")) {
-          try {
-            sessionStorage.removeItem("studio.gate");
-          } catch (err) {}
-          if (el.gateErr) {
-            el.gateErr.hidden = false;
-            el.gateErr.textContent = "That code does not open this press.";
-          }
-          return;
-        }
-      } catch (err) {}
-      if (el.gateErr) el.gateErr.hidden = true;
-      render();
-    });
-  }
-
   state = load();
   const loadedId = state.currentJobId;
   while (state.currentJobId !== "job1" && !isUnlocked(state.currentJobId)) {
@@ -679,13 +613,5 @@
     state.drafts.job1 = VIBE;
   }
 
-  fetch("/health")
-    .then((r) => r.json())
-    .then((data) => {
-      needsGate = Boolean(data && data.gate);
-      render();
-    })
-    .catch(() => {
-      render();
-    });
+  render();
 })();

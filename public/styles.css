@@ -226,30 +226,6 @@ input:focus, textarea:focus, button:focus-visible {
 }
 .text-btn:hover { color: var(--paper); }
 
-.gate {
-  min-height: 100vh;
-  display: grid;
-  align-content: end;
-  padding: calc(var(--s) * 8) calc(var(--s) * 6);
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #100e0c 0 18px,
-      #161310 18px 20px
-    );
-  max-width: none;
-  margin: 0;
-}
-.gate .intake-form {
-  max-width: 28rem;
-  padding: calc(var(--s) * 4) 0 0;
-}
-.gate h1 {
-  font-size: clamp(2.8rem, 7vw, 5.4rem);
-  color: var(--paper);
-  line-height: 0.9;
-}
-
 .studio { min-height: 100vh; display: flex; flex-direction: column; }
 
 .studio-bar {
@@ -568,7 +544,6 @@ input:focus, textarea:focus, button:focus-visible {
   .pane.right.open { display: block; }
   .wall-toggle { display: inline; }
   .artefacts.compare { grid-template-columns: 1fr; }
-  .gate { padding: calc(var(--s) * 5) calc(var(--s) * 3); }
 }
 
 @media (prefers-reduced-motion: reduce) {

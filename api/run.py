@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
@@ -32,10 +31,6 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self) -> None:
-        expected = os.environ.get("STUDIO_GATE", "").strip()
-        if expected and self.headers.get("x-studio-gate") != expected:
-            self._send(401, {"ok": False, "error": "gate", "message": "This studio is gated."})
-            return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length) if length else b"{}"

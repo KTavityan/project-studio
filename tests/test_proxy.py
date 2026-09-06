@@ -4,7 +4,6 @@ import httpx
 from fastapi.testclient import TestClient
 
 os.environ["STUDIO_MOCK"] = "1"
-os.environ["STUDIO_GATE"] = ""
 os.environ.pop("STUDIO_API_KEY", None)
 
 from backend import engine  # noqa: E402
@@ -23,7 +22,6 @@ PROJECT = {
 
 def setup_function() -> None:
     os.environ["STUDIO_MOCK"] = "1"
-    os.environ["STUDIO_GATE"] = ""
     main.reset_cap_for_tests()
     engine.reset_cap_for_tests()
 
@@ -33,7 +31,6 @@ def test_health():
     assert r.status_code == 200
     body = r.json()
     assert body["ok"] is True
-    assert "gate" in body
 
 
 def test_index_serves_html():
@@ -187,26 +184,10 @@ def test_job3_mock_has_no_badge():
     assert "badge" not in data["json"]
 
 
-def test_gate_blocks_run():
-    os.environ["STUDIO_GATE"] = "session-code"
+def test_run_is_not_gated():
     r = client.post(
         "/run",
         json={"jobId": "job1", "prompt": "hello", "project": PROJECT},
     )
-    assert r.status_code == 401
-    assert r.json()["error"] == "gate"
-    r2 = client.post(
-        "/run",
-        headers={"x-studio-gate": "session-code"},
-        json={"jobId": "job1", "prompt": "hello", "project": PROJECT},
-    )
-    assert r2.status_code == 200
-    assert r2.json()["ok"] is True
-    os.environ["STUDIO_GATE"] = ""
-
-
-def test_health_reports_gate():
-    os.environ["STUDIO_GATE"] = "session-code"
-    assert client.get("/health").json()["gate"] is True
-    os.environ["STUDIO_GATE"] = ""
-    assert client.get("/health").json()["gate"] is False
+    assert r.status_code == 200
+    assert r.json()["ok"] is True

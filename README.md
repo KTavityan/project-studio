@@ -30,7 +30,7 @@ That binds `127.0.0.1:8787` only. Do not pass `--host 0.0.0.0`.
 
 Open `http://127.0.0.1:8787`. The local server binds localhost only.
 
-On Vercel the same UI is served from `public/` and `POST /run` goes to `api/run.py`. Set `STUDIO_API_KEY` (and optionally `STUDIO_GATE`) in the project env. The process spend cap is weaker on serverless because instances recycle; keep the OpenAI project budget tight as well.
+On Vercel the same UI is served from `public/` and `POST /run` goes to `api/run.py`. Set `STUDIO_API_KEY` in the project env, or leave it empty to use AI Gateway. The process spend cap is weaker on serverless because instances recycle; keep the provider budget tight as well.
 
 ## Tests
 
